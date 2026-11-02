@@ -6,6 +6,7 @@ from .mcp_config import ClaudeDesktopConfigParser, McpConfigParser
 from .package_json import PackageJsonParser
 from .pyproject import PyprojectParser
 from .requirements import RequirementsParser
+from .skill_markdown import SkillMarkdownParser
 
 __all__ = [
     "ClaudeDesktopConfigParser",
@@ -13,4 +14,5 @@ __all__ = [
     "PackageJsonParser",
     "PyprojectParser",
     "RequirementsParser",
+    "SkillMarkdownParser",
 ]
