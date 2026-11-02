@@ -1,0 +1,7 @@
+# runtime deps
+requests==2.31.0
+flask>=2.0
+numpy===1.24.4
+django
+# dev
+pytest~=7.0
