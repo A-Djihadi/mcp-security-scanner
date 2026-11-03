@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gh-committer": {
+      "command": "node",
+      "args": ["dist/index.js", "--token", "$GITHUB_TOKEN"]
+    }
+  }
+}
