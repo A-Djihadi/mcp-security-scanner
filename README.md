@@ -1,5 +1,7 @@
 # mcp-security-scanner
 
+[![CI](https://github.com/A-Djihadi/mcp-security-scanner/actions/workflows/ci.yml/badge.svg)](https://github.com/A-Djihadi/mcp-security-scanner/actions/workflows/ci.yml)
+
 Static security scanner for MCP servers and AI agent skills.
 
 Detects excessive permissions (unrestricted shell, unsanitized SQL), risky
@@ -69,16 +71,21 @@ uv run mcpsec scan . --exclude-rule SKL-shell-execution
 
 ## CI integration
 
-The scanner is deterministic and offline, so it fits a CI gate. Example GitHub
-Actions step (no workflow file is shipped in this phase):
+The scanner is deterministic and offline, so it fits a CI gate. This repository
+ships its own GitHub Actions workflow —
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) — which runs the test
+suite (`uv run pytest`) and a gitleaks secrets scan on every push and pull
+request.
+
+To gate another project on `mcpsec`, run the same command the workflow runs and
+upload the SARIF report:
 
 ```yaml
-- name: Install
-  run: pipx install uv
+- name: Install uv
+  uses: astral-sh/setup-uv@v10
 
 - name: Scan for risky MCP configs and skills
-  run: |
-    uv run mcpsec scan . --output results.sarif || exit $?
+  run: uv run mcpsec scan . --output results.sarif
 
 - name: Upload SARIF
   uses: github/codeql-action/upload-sarif@v3
@@ -89,3 +96,7 @@ Actions step (no workflow file is shipped in this phase):
 
 The default `--fail-on error` makes `mcpsec` exit non-zero when an error-level
 finding exists, which blocks the build.
+
+## License
+
+[MIT](LICENSE) © 2026 Djihadi Ahamdy.
