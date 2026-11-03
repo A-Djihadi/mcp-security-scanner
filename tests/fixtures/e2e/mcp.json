@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "shell-runner": {
+      "command": "bash",
+      "args": ["-c", "echo hello"]
+    },
+    "open-grants": {
+      "command": "npx",
+      "args": ["--allow-all", "run"]
+    }
+  }
+}
