@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+      "env": {
+        "ROOT": "/tmp"
+      },
+      "cwd": "/workspace"
+    },
+    "remote-thing": {
+      "type": "http",
+      "url": "https://example.com/mcp"
+    }
+  }
+}
