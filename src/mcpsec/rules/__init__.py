@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ..model import RuleRegistry
+from ..sources import ReachabilityProvider
 from .dependency import DEPUnpinned
 from .dependency_registry import (
     DEPKnownVulnerability,
@@ -16,6 +17,13 @@ from .mcp_permissions import (
     MCPShellUnrestricted,
 )
 from .parsing import MCPParseAmbiguous
+from .remote import (
+    MCPHeaderSecret,
+    MCPInsecureTransport,
+    MCPRemoteNoAuth,
+    MCPUnreachable,
+    MCPUnreachableDiagnostic,
+)
 from .semantic import CorpusAnchor, SemanticCorpus, SemanticRule
 from .skill_patterns import (
     SKLObfuscatedCommand,
@@ -30,6 +38,9 @@ _ALL_RULES = [
     MCPAllowAll(),
     MCPBroadNetwork(),
     MCPBroadFilesystem(),
+    MCPInsecureTransport(),
+    MCPHeaderSecret(),
+    MCPRemoteNoAuth(),
     SKLShellExecution(),
     SKLRemoteCodeExec(),
     SKLObfuscatedCommand(),
@@ -46,6 +57,11 @@ __all__ = [
     "MCPAllowAll",
     "MCPBroadNetwork",
     "MCPBroadFilesystem",
+    "MCPInsecureTransport",
+    "MCPHeaderSecret",
+    "MCPRemoteNoAuth",
+    "MCPUnreachable",
+    "MCPUnreachableDiagnostic",
     "SKLShellExecution",
     "SKLRemoteCodeExec",
     "SKLObfuscatedCommand",
@@ -69,9 +85,10 @@ def build_default_registry(*, online: bool = False, embedder=None, corpus=None) 
     """Return a registry populated with every MVP rule (stable id order).
 
     Online rules (``online=True``) are included only when ``online=True``; the
-    default registry is exactly the offline phase-1 rule set (ADR-0007). The
-    semantic rule is opt-in: it is registered only when an ``embedder`` is
-    explicitly configured (ADR-0008).
+    default registry is exactly the offline rule set (ADR-0007). Online rules
+    that need a data provider receive it injected here, so the default path
+    never constructs a network client. The semantic rule is opt-in: it is
+    registered only when an ``embedder`` is explicitly configured (ADR-0008).
     """
     registry = RuleRegistry()
     for rule in _ALL_RULES:
@@ -80,6 +97,8 @@ def build_default_registry(*, online: bool = False, embedder=None, corpus=None) 
     if online:
         for rule in _build_online_rules():
             registry.register(rule)
+        registry.register(MCPUnreachable(ReachabilityProvider()))
+        registry.register(MCPUnreachableDiagnostic())
     if embedder is not None:
         if corpus is None:
             raise ValueError("a corpus is required when an embedder is configured")

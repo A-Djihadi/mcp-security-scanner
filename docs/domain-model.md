@@ -25,8 +25,9 @@ The unit every parser produces and every rule consumes. Discriminated by `kind`.
 
 **`McpServer` (kind=mcp_server)** — `payload`: `command` (str|null), `args`
 (list[str]), `env` (dict), `cwd` (str|null), `transport` (`stdio`|`remote`),
-`url` (str|null). Every field carries its own `SourceLocation` so a rule can
-point at exactly the offending `args` element or `command` value.
+`url` (str|null), `type` (str|null, raw transport type), `headers` (dict). Every
+field carries its own `SourceLocation` so a rule can point at exactly the
+offending `args` element, `command` value, or header value.
 
 **`Skill` (kind=skill)** — `payload`: `frontmatter` (dict, YAML), `body` (str,
 markdown, line-indexed), `body_lines` (list[str] for line-accurate matches).

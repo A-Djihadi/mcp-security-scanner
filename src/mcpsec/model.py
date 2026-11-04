@@ -9,10 +9,12 @@ parser emits and a rule consumes, discriminated by ``kind``:
 
 * ``mcp_server`` — payload: ``command`` (str|None), ``args`` (list[str]),
   ``env`` (dict[str,str]), ``cwd`` (str|None), ``transport`` ("stdio"|"remote"),
-  ``url`` (str|None). Each field carries its own ``SourceLocation`` in
+  ``url`` (str|None), ``type`` (str|None, raw transport type), ``headers``
+  (dict[str,str]). Each field carries its own ``SourceLocation`` in
   ``field_locations`` (``"command"``, ``"cwd"``, ``"url"`` → SourceLocation;
   ``"args"`` → tuple[SourceLocation, ...] parallel to the args list; ``"env"`` →
-  dict[str, SourceLocation] keyed by env var name).
+  dict[str, SourceLocation] keyed by env var name; ``"headers"`` →
+  dict[str, SourceLocation] keyed by header name, pointing at the header value).
 * ``skill`` — payload: ``frontmatter`` (dict), ``body`` (str), ``body_lines``
   (list[str]). ``field_locations["body"]`` is a tuple[SourceLocation, ...]
   parallel to ``body_lines``.
