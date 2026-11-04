@@ -95,6 +95,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default="error",
         help="Minimum severity that fails the scan (default: error).",
     )
+    scan.add_argument(
+        "--online",
+        action="store_true",
+        help="Enable online rules (network-backed; default: offline).",
+    )
 
     return parser
 
@@ -141,7 +146,7 @@ def _run_scan(args: argparse.Namespace) -> int:
         print(f"error: not a directory: {args.path}", file=sys.stderr)
         return 2
 
-    registry = build_default_registry()
+    registry = build_default_registry(online=args.online)
     disabled = _select_rules(registry, args.rules, args.exclude_rule)
     engine = RuleEngine(registry, disabled=disabled, min_severity=args.severity)
 
@@ -160,7 +165,7 @@ def _run_scan(args: argparse.Namespace) -> int:
     if args.format == "text":
         content = format_findings(findings)
     else:
-        content = SARIFWriter().dumps(findings, registry)
+        content = SARIFWriter().dumps(findings, registry, online=args.online)
 
     if args.output:
         out = Path(args.output)
