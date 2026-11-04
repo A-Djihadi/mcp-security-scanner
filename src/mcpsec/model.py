@@ -88,10 +88,16 @@ class RuleMetadata(Protocol):
     id: str
     level: str  # "error" | "warning" | "note"
     short_description: str
+    online: bool = False
 
 
 class Rule(RuleMetadata, Protocol):
-    """Deterministic static check: maps one Target to zero or more Findings."""
+    """Deterministic static check: maps one Target to zero or more Findings.
+
+    ``online`` is ``False`` by default: an online rule's verdict depends on data
+    that only exists on the network, so it is excluded from the default registry
+    and only runs under ``--online`` (ADR-0007).
+    """
 
     def check(self, target: Target) -> list[Finding]: ...
 

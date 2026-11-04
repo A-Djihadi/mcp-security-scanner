@@ -23,23 +23,38 @@ class _AdhocRule:
     id: str
     level: str
     short_description: str = ""
+    online: bool = False
 
 
 class SARIFWriter:
     SCHEMA_URI = "https://json.schemastore.org/sarif-2.1.0.json"
     TOOL_NAME = "mcpsec"
 
-    def write(self, findings: list[Finding], rules: RuleRegistry, out: Path) -> None:
+    def write(
+        self,
+        findings: list[Finding],
+        rules: RuleRegistry,
+        out: Path,
+        *,
+        online: bool = False,
+    ) -> None:
         """Write a SARIF document to ``out`` (creating parent directories)."""
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(self.dumps(findings, rules), encoding="utf-8")
+        out.write_text(self.dumps(findings, rules, online=online), encoding="utf-8")
 
-    def dumps(self, findings: list[Finding], rules: RuleRegistry) -> str:
+    def dumps(
+        self, findings: list[Finding], rules: RuleRegistry, *, online: bool = False
+    ) -> str:
         return json.dumps(
-            self.render(findings, rules), indent=2, sort_keys=True, ensure_ascii=True
+            self.render(findings, rules, online=online),
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=True,
         ) + "\n"
 
-    def render(self, findings: list[Finding], rules: RuleRegistry) -> dict:
+    def render(
+        self, findings: list[Finding], rules: RuleRegistry, *, online: bool = False
+    ) -> dict:
         findings = sort_findings(findings)
 
         known: dict[str, RuleMetadata] = {rule.id: rule for rule in rules}
@@ -65,8 +80,9 @@ class SARIFWriter:
             ],
         }
 
-        results = [
-            {
+        results = []
+        for finding in findings:
+            result = {
                 "ruleId": finding.rule_id,
                 "ruleIndex": rule_index[finding.rule_id],
                 "level": finding.level,
@@ -74,13 +90,18 @@ class SARIFWriter:
                 "locations": [self._location(finding.location)],
                 "partialFingerprints": {"primary": finding.fingerprint},
             }
-            for finding in findings
-        ]
+            if getattr(known[finding.rule_id], "online", False):
+                result["properties"] = {"mode": "online"}
+            results.append(result)
+
+        run: dict = {"tool": {"driver": driver}, "results": results}
+        if online:
+            run["properties"] = {"mcpsec": {"online": True}}
 
         return {
             "$schema": self.SCHEMA_URI,
             "version": "2.1.0",
-            "runs": [{"tool": {"driver": driver}, "results": results}],
+            "runs": [run],
         }
 
     @staticmethod

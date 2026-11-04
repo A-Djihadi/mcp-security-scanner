@@ -43,9 +43,14 @@ __all__ = [
 ]
 
 
-def build_default_registry() -> RuleRegistry:
-    """Return a registry populated with every MVP rule (stable id order)."""
+def build_default_registry(*, online: bool = False) -> RuleRegistry:
+    """Return a registry populated with every MVP rule (stable id order).
+
+    Online rules (``online=True``) are included only when ``online=True``; the
+    default registry is exactly the offline phase-1 rule set (ADR-0007).
+    """
     registry = RuleRegistry()
     for rule in _ALL_RULES:
-        registry.register(rule)
+        if online or not getattr(rule, "online", False):
+            registry.register(rule)
     return registry
