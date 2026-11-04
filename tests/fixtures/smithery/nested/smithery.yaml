@@ -1,0 +1,17 @@
+# smithery.yaml — configSchema and commandFunction nested under startCommand,
+# the canonical form the docs describe ("The startCommand object consists of:
+# type, configSchema, commandFunction"). The parser must tolerate both nested
+# and top-level placement.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - DB_PASSWORD
+    properties:
+      DB_PASSWORD:
+        type: string
+  commandFunction: |-
+    (config) => ({ command: 'uvx', args: ['my-server'], env: { DB_PASSWORD: 'pw' } })
+exampleConfig:
+  DB_PASSWORD: dummy

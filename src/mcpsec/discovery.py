@@ -18,6 +18,7 @@ _SUPPORTED_NAMES = frozenset(
         "requirements.txt",
         "pyproject.toml",
         "SKILL.md",
+        "smithery.yaml",
     }
 )
 
