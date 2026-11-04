@@ -28,8 +28,8 @@ class Node:
     value: Any
     key_offset: int | None = None
     value_offset: int | None = None
-    members: list[tuple[str, "Node"]] = field(default_factory=list)
-    items: list["Node"] = field(default_factory=list)
+    members: list[tuple[str, Node]] = field(default_factory=list)
+    items: list[Node] = field(default_factory=list)
 
 
 def _skip_ws(text: str, i: int) -> int:

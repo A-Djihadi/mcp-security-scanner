@@ -24,14 +24,14 @@ def test_text_format_prints_one_line_per_finding(capsys):
     assert code == 1  # error-level findings present
     lines = out.splitlines()
     assert lines == [
-        '[error] MCP-shell-unrestricted — mcp.json:4:18 — '
-        'server "shell-runner" runs an unrestricted shell (command "bash")',
-        '[error] MCP-allow-all — mcp.json:9:16 — '
-        'server "open-grants" grants all permissions (--allow-all)',
-        '[error] SKL-remote-code-exec — profiles/alice/skills/evil/SKILL.md:6:1 — '
-        'skill "evil" pipes remote content to a shell',
-        '[warning] DEP-unpinned — requirements.txt:1:1 — '
-        'dependency "requests" is unpinned (no version spec)',
+        ('[error] MCP-shell-unrestricted — mcp.json:4:18 — '
+            'server "shell-runner" runs an unrestricted shell (command "bash")'),
+        ('[error] MCP-allow-all — mcp.json:9:16 — '
+            'server "open-grants" grants all permissions (--allow-all)'),
+        ('[error] SKL-remote-code-exec — profiles/alice/skills/evil/SKILL.md:6:1 — '
+            'skill "evil" pipes remote content to a shell'),
+        ('[warning] DEP-unpinned — requirements.txt:1:1 — '
+            'dependency "requests" is unpinned (no version spec)'),
     ]
 
 

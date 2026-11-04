@@ -14,8 +14,8 @@ from pathlib import Path
 
 from mcpsec import cli
 from mcpsec.embedder import (
-    MODEL_REVISION,
     _MODEL_FILES,
+    MODEL_REVISION,
     load_default_embedder,
 )
 
@@ -43,7 +43,7 @@ def test_model_is_pinned_by_revision_and_file_hashes():
 
     # Every model file is pinned by a 64-hex SHA-256.
     assert _MODEL_FILES, "at least one model file must be declared"
-    for _remote, (sha256, _local) in _MODEL_FILES.items():
+    for sha256, _local in _MODEL_FILES.values():
         assert len(sha256) == 64
         assert int(sha256, 16) >= 0
 
@@ -93,7 +93,7 @@ def test_embedder_module_import_is_lazy():
         "print('clean' if 'onnxruntime' not in sys.modules "
         "and 'tokenizers' not in sys.modules else 'dirty')"
     )
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=False)
     assert out.stdout.strip() == "clean"
 
 
@@ -104,20 +104,20 @@ def test_default_scan_does_not_import_model_runtime(tmp_path):
         "sys.stderr.write('clean' if 'onnxruntime' not in sys.modules "
         "and 'tokenizers' not in sys.modules else 'dirty')"
     )
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=False)
     assert out.stderr.strip() == "clean"
 
 
 def test_load_default_embedder_raises_clear_error_when_extra_missing(monkeypatch):
-    from mcpsec.embedder import SemanticBackendError
-
     import builtins
+
+    from mcpsec.embedder import SemanticBackendError
 
     real_import = builtins.__import__
 
     def fake_import(name, *args, **kwargs):
         if name in ("onnxruntime", "tokenizers"):
-            raise ImportError("No module named %r" % name)
+            raise ImportError(f"No module named {name!r}")
         return real_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)

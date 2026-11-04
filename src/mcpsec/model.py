@@ -27,8 +27,9 @@ from __future__ import annotations
 
 import enum
 import hashlib
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Iterator, Protocol, Sequence
+from typing import Any, Protocol
 
 
 class TargetKind(str, enum.Enum):

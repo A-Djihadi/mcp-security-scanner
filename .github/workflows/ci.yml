@@ -18,10 +18,36 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.13"
-      - name: Sync dependencies
-        run: uv sync
+      - name: Sync dependencies (with the optional agent extra, so triage is tested)
+        run: uv sync --extra agent
+      - name: Lint
+        run: uv run ruff check src tests
       - name: Run tests
         run: uv run pytest
+
+  self-scan:
+    # Dogfooding : le scanner audite son propre depot et publie le SARIF dans l'onglet Security.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.13"
+      - name: Sync dependencies
+        run: uv sync
+      - name: Scan this repository (fixtures excluded)
+        run: uv run mcpsec scan . --exclude tests/fixtures --exclude .venv --output results.sarif
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: results.sarif
+          category: mcpsec
 
   secrets-scan:
     runs-on: ubuntu-latest
