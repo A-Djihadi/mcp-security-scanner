@@ -122,7 +122,7 @@ def test_header_secret_flags_x_api_key():
         name="r",
         transport="remote",
         url="https://example.com/mcp",
-        headers={"X-API-Key": "sk-abcdef123456"},
+        headers={"X-API-Key": "sk-abcdef123456"},  # gitleaks:allow (fake test key, not a real secret)
         field_locations={"headers": {"X-API-Key": api_loc}},
     )
     findings = rule.check(target)
@@ -200,7 +200,7 @@ def test_remote_no_auth_ignores_remote_with_api_key_header():
         name="r",
         transport="remote",
         url="https://example.com/mcp",
-        headers={"X-API-Key": "sk-abcdef123456"},
+        headers={"X-API-Key": "sk-abcdef123456"},  # gitleaks:allow (fake test key, not a real secret)
     )
     assert rule.check(target) == []
 
