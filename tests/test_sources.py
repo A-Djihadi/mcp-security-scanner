@@ -8,16 +8,14 @@ isolation (ADR-0007).
 from __future__ import annotations
 
 import io
-import json
 import socket
 import urllib.error
 import urllib.request
-from pathlib import Path
 
 import pytest
 
 from mcpsec import cli, rules
-from mcpsec.model import Finding, RuleRegistry, SourceLocation, Target, TargetKind
+from mcpsec.model import Finding, SourceLocation, Target, TargetKind
 from mcpsec.sources import (
     DEFAULT_ATTEMPTS,
     DataUnavailable,
@@ -92,7 +90,7 @@ def test_rule_uses_injected_provider_and_performs_no_socket_io(monkeypatch):
 # --------------------------------------------------------------------------- #
 def test_data_unavailable_on_timeout(monkeypatch):
     def _timeout(request, **kwargs):
-        raise socket.timeout("timed out")
+        raise TimeoutError("timed out")
 
     _patch_urlopen(monkeypatch, _timeout)
     with pytest.raises(DataUnavailable) as exc:
@@ -220,3 +218,46 @@ def test_provider_failure_never_changes_exit_code(tmp_path, monkeypatch, capsys)
     assert code == 0
     assert "DEP-unpinned" in out
     assert "DEP-outdated" not in out
+
+
+# --- audit 2026-11: no local files, no SSRF, bounded bodies ------------------
+
+def test_client_refuses_non_http_schemes():
+    from mcpsec.sources._http import DataUnavailable, _HttpClient
+
+    client = _HttpClient(timeout=1, max_attempts=1)
+    for url in ("file:///etc/passwd", "ftp://example.com/x", "data:text/plain,hi"):
+        with pytest.raises(DataUnavailable) as info:
+            client.get(url)
+        assert info.value.kind == "invalid"
+
+
+def test_reachability_never_probes_private_or_metadata_addresses():
+    from mcpsec.sources import ReachabilityProvider
+    from mcpsec.sources._http import DataUnavailable
+
+    class Boom:
+        def get(self, url):  # pragma: no cover - must never be called
+            raise AssertionError(f"probed {url}")
+
+    probe = ReachabilityProvider(client=Boom())
+    for url in ("http://169.254.169.254/latest/meta-data/", "http://127.0.0.1:8080/",
+                "http://10.0.0.5/mcp", "http://[::1]/", "file:///etc/passwd"):
+        with pytest.raises(DataUnavailable) as info:
+            probe.probe(url)
+        assert info.value.kind == "blocked"
+
+
+def test_response_body_is_bounded(monkeypatch):
+    import io
+
+    from mcpsec.sources import _http
+
+    class FakeResponse(io.BytesIO):
+        pass
+
+    monkeypatch.setattr(_http, "MAX_RESPONSE_BYTES", 8)
+    monkeypatch.setattr(_http.urllib.request, "urlopen",
+                        lambda req, timeout: FakeResponse(b"x" * 100))
+    with pytest.raises(_http.DataUnavailable):
+        _http._HttpClient(max_attempts=1).get("https://example.com/big")
