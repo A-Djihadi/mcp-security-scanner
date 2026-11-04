@@ -105,6 +105,38 @@ class OSVProvider:
             )
         return data
 
+    def query_vulns(self, queries: list[dict]) -> list[dict]:
+        """Return every vuln summary for ``queries``, following pagination.
+
+        Query/response shape pinned from the OSV.dev docs (to verify): each query
+        is ``{"package": {"name", "ecosystem"}, "version"}`` and a response is
+        ``{"results": [{"vulns": [{"id", "modified"}], "next_page_token"}]}`` in
+        input order. When a result carries ``next_page_token``, the same query is
+        re-sent with ``page_token`` set; queries without a token are dropped from
+        the follow-up request. See the fixtures in ``tests/``.
+        """
+        summaries: list[dict] = []
+        active = list(queries)
+        while active:
+            data = self.query_batch(active)
+            results = data.get("results") if isinstance(data, dict) else None
+            if not isinstance(results, list):
+                raise DataUnavailable(
+                    "OSV.dev querybatch missing results", kind="malformed"
+                )
+            next_queries: list[dict] = []
+            for query, result in zip(active, results):
+                if not isinstance(result, dict):
+                    continue
+                vulns = result.get("vulns")
+                if isinstance(vulns, list):
+                    summaries.extend(v for v in vulns if isinstance(v, dict))
+                token = result.get("next_page_token")
+                if token:
+                    next_queries.append({**query, "page_token": token})
+            active = next_queries
+        return summaries
+
     def get_vuln(self, vuln_id: str) -> dict | None:
         """``GET /v1/vulns/{id}``; ``None`` on 404, ``DataUnavailable`` otherwise."""
         data = self._client.get_json(f"{OSV_BASE}/v1/vulns/{quote(vuln_id)}")
@@ -150,3 +182,47 @@ class ReachabilityProvider:
             if exc.kind == "refused":
                 return "unreachable"
             raise
+
+
+class PopularPackagesProvider:
+    """Popularity-ranked package-name seed list for typosquat detection.
+
+    The seed-list source (PyPI "top N" download ranking, npm "top N", or a
+    curated allowlist) is an owner decision and is "to verify" for a licenseable,
+    offline-cacheable source (ADR-0007). This placeholder returns a small bundled
+    list so the rule is runnable; a real source must replace ``_DEFAULT_SEED``.
+    """
+
+    def __init__(
+        self,
+        *,
+        client: _HttpClient | None = None,
+        timeout: float = DEFAULT_TIMEOUT,
+        max_attempts: int = DEFAULT_ATTEMPTS,
+    ) -> None:
+        self._client = client or _HttpClient(
+            timeout=timeout, max_attempts=max_attempts
+        )
+
+    def popular_packages(self) -> list[str]:
+        """Return the popularity-ranked seed list.
+
+        The default source is a bundled placeholder ("to verify"); the contract
+        is a ``list[str]`` in descending popularity order, injected into the
+        ``DEP-unknown`` rule so the rule stays pure.
+        """
+        return list(_DEFAULT_SEED)
+
+
+# Placeholder seed list — to verify against a licenseable source (ADR-0007).
+_DEFAULT_SEED: list[str] = [
+    "requests",
+    "flask",
+    "numpy",
+    "django",
+    "pandas",
+    "express",
+    "react",
+    "lodash",
+    "axios",
+]
