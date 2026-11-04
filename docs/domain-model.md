@@ -18,7 +18,7 @@ The unit every parser produces and every rule consumes. Discriminated by `kind`.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `kind` | enum | `mcp_server` \| `skill` \| `dependency` |
+| `kind` | enum | `mcp_server` \| `skill` \| `dependency` \| `python_source` |
 | `location` | `SourceLocation` | file + spans (see below). |
 | `name` | str | server name / skill name / package name. |
 | `payload` | dict | kind-specific, see variants. |
@@ -34,6 +34,12 @@ markdown, line-indexed), `body_lines` (list[str] for line-accurate matches).
 **`Dependency` (kind=dependency)** — `payload`: `version_spec` (str), `manifest`
 (str path), `pinned` (bool, computed by the parser), `source` (str: the exact
 declaration line).
+
+**`PythonSource` (kind=python_source)** — `payload`: `source` (str, the raw file
+text). Produced by `PythonSourceParser` for each `*.py` file; consumed by the
+`FLOW-*` taint rules (T22, ADR-0009), which run a stdlib-`ast` taint analysis
+over the source. `name` is the normalized file path; `location` is the file
+itself (line 1).
 
 ### SourceLocation
 
