@@ -1,6 +1,7 @@
 # ADR-0005: Semantic / embedding patterns deferred to phase 2
 
-**Status:** accepted
+**Status:** superseded by ADR-0008 (the phase-2 approach is now decided; this
+ADR remains as the record of the MVP deferral).
 
 ## Context
 
