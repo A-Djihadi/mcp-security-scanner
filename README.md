@@ -46,6 +46,34 @@ uv run mcpsec scan . --exclude-rule SKL-shell-execution
 | `--rules IDS` | Comma-separated rule IDs to run; all others are disabled. |
 | `--exclude-rule IDS` | Comma-separated rule IDs to disable. |
 | `--fail-on error\|warning\|note` | Minimum severity that fails the scan (default `error`). |
+| `--semantic` | Enable semantic malicious-intent detection via the local embedding model (requires the `[semantic]` extra). |
+
+### Semantic detection (optional)
+
+`--semantic` opts into embedding-based malicious-intent detection for skills
+(`SKL-semantic-malicious`). It is **off by default**: the base install stays
+PyYAML-only, and a default scan never loads the model runtime.
+
+```bash
+# Opt into the heavier install once:
+uv sync --extra semantic   # or: pip install mcp-security-scanner[semantic]
+
+# Then scan with semantic detection enabled:
+uv run mcpsec scan . --semantic
+```
+
+The default embedder is a small, CPU-only ONNX sentence-transformer:
+
+- **Model:** `all-MiniLM-L6-v2` (ONNX export `Xenova/all-MiniLM-L6-v2`), Apache-2.0.
+- **Pinned revision:** `751bff37182d3f1213fa05d7196b954e230abad9` (files verified by SHA-256).
+- **Corpus:** a curated, versioned set of malicious-intent anchors
+  (`src/mcpsec/corpus.py`, version `1`); the model revision and corpus version
+  are recorded on every `SKL-semantic-malicious` finding for reproducibility.
+
+**To verify:** the similarity threshold (default `0.85`) and the corpus anchor
+coverage are calibrated against synthetic probes, not a production corpus; they
+should be re-tuned against real-world skill data before relying on this rule as
+a CI gate.
 
 ### Exit codes
 
@@ -68,6 +96,7 @@ uv run mcpsec scan . --exclude-rule SKL-shell-execution
 | `SKL-obfuscated-command` | warning | Shell command decodes a `base64` payload (`base64 -d` / `--decode`). |
 | `SKL-sql-concatenation` | error | SQL built by string concatenation/interpolation; parameterized `?` queries do not trigger. |
 | `DEP-unpinned` | warning | A direct dependency whose version spec is unpinned (`*`, `latest`, `^`, `~`, empty). |
+| `SKL-semantic-malicious` | warning | Skill prose is semantically similar to a known-malicious reference (opt-in via `--semantic`). |
 
 ## CI integration
 
