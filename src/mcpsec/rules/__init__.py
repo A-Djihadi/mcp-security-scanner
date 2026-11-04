@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from ..model import RuleRegistry
 from .dependency import DEPUnpinned
+from .dependency_registry import (
+    DEPKnownVulnerability,
+    DEPOutdated,
+    DEPUnknown,
+)
 from .mcp_permissions import (
     MCPAllowAll,
     MCPBroadFilesystem,
@@ -46,6 +51,9 @@ __all__ = [
     "SKLObfuscatedCommand",
     "SKLSqlConcatenation",
     "DEPUnpinned",
+    "DEPOutdated",
+    "DEPKnownVulnerability",
+    "DEPUnknown",
     "MCPParseAmbiguous",
     "FLOWShellInjection",
     "FLOWSqlInjection",
@@ -69,8 +77,27 @@ def build_default_registry(*, online: bool = False, embedder=None, corpus=None) 
     for rule in _ALL_RULES:
         if online or not getattr(rule, "online", False):
             registry.register(rule)
+    if online:
+        for rule in _build_online_rules():
+            registry.register(rule)
     if embedder is not None:
         if corpus is None:
             raise ValueError("a corpus is required when an embedder is configured")
         registry.register(SemanticRule(embedder, corpus))
     return registry
+
+
+def _build_online_rules() -> list:
+    """Construct the registry-backed dependency rules with live providers.
+
+    Providers are constructed only under ``--online`` (ADR-0007); construction
+    performs no I/O. Each rule receives its provider at construction so
+    ``check()`` stays I/O-free and deterministic over provider output.
+    """
+    from ..sources import NpmProvider, OSVProvider, PopularPackagesProvider, PyPIProvider
+
+    return [
+        DEPOutdated(pypi_provider=PyPIProvider(), npm_provider=NpmProvider()),
+        DEPKnownVulnerability(OSVProvider()),
+        DEPUnknown(PopularPackagesProvider()),
+    ]
