@@ -1,6 +1,8 @@
 # ADR-0006: Dependency policy — pinning checks only (offline) in MVP
 
-**Status:** accepted
+**Status:** superseded by ADR-0007 (the opt-in gating mechanism and data
+sources are now fully specified; this ADR remains as the record of the MVP
+scope cut).
 
 ## Context
 
