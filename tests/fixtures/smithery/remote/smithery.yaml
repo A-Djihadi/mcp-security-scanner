@@ -1,0 +1,8 @@
+# smithery.yaml — a non-stdio startCommand.type maps to transport "remote".
+# The exact accepted remote values are NOT documented by Smithery ("to verify");
+# this fixture pins a plausible value rather than guessing a taxonomy.
+startCommand:
+  type: streamable-http
+configSchema:
+  type: object
+  required: []
