@@ -95,6 +95,14 @@ def _build_parser() -> argparse.ArgumentParser:
         default="error",
         help="Minimum severity that fails the scan (default: error).",
     )
+    scan.add_argument(
+        "--semantic",
+        action="store_true",
+        help=(
+            "Enable semantic malicious-intent detection using the local embedding "
+            "model (requires the [semantic] extra)."
+        ),
+    )
 
     return parser
 
@@ -142,6 +150,14 @@ def _run_scan(args: argparse.Namespace) -> int:
         return 2
 
     registry = build_default_registry()
+    if args.semantic:
+        # Lazy import: the model runtime is only imported when --semantic is
+        # passed; a default scan never touches onnxruntime/tokenizers.
+        from .embedder import load_default_embedder
+        from .corpus import DEFAULT_CORPUS
+
+        embedder = load_default_embedder()
+        registry = build_default_registry(embedder=embedder, corpus=DEFAULT_CORPUS)
     disabled = _select_rules(registry, args.rules, args.exclude_rule)
     engine = RuleEngine(registry, disabled=disabled, min_severity=args.severity)
 
