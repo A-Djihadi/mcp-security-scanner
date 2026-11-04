@@ -33,6 +33,7 @@ class TargetKind(str, enum.Enum):
     MCP_SERVER = "mcp_server"
     SKILL = "skill"
     DEPENDENCY = "dependency"
+    PYTHON_SOURCE = "python_source"
 
 
 @dataclass(frozen=True)

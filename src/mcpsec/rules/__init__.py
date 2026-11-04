@@ -17,6 +17,7 @@ from .skill_patterns import (
     SKLShellExecution,
     SKLSqlConcatenation,
 )
+from .taint import FLOWCodeEval, FLOWShellInjection, FLOWSqlInjection
 
 _ALL_RULES = [
     MCPShellUnrestricted(),
@@ -29,6 +30,9 @@ _ALL_RULES = [
     SKLSqlConcatenation(),
     DEPUnpinned(),
     MCPParseAmbiguous(),
+    FLOWShellInjection(),
+    FLOWSqlInjection(),
+    FLOWCodeEval(),
 ]
 
 __all__ = [
@@ -42,6 +46,9 @@ __all__ = [
     "SKLSqlConcatenation",
     "DEPUnpinned",
     "MCPParseAmbiguous",
+    "FLOWShellInjection",
+    "FLOWSqlInjection",
+    "FLOWCodeEval",
     "build_default_registry",
 ]
 

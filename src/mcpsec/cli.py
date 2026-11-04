@@ -16,6 +16,7 @@ from .parsers import (
     McpConfigParser,
     PackageJsonParser,
     PyprojectParser,
+    PythonSourceParser,
     RequirementsParser,
     SkillMarkdownParser,
     SmitheryYamlParser,
@@ -153,9 +154,13 @@ def _run_scan(args: argparse.Namespace) -> int:
     engine = RuleEngine(registry, disabled=disabled, min_severity=args.severity)
 
     parsers = {name: cls() for name, cls in _PARSERS.items()}
+    python_parser = PythonSourceParser()
     targets = []
     for rel in discover_files(root):
         abs_path = root / rel
+        if rel.name.endswith(".py"):
+            targets.extend(python_parser.parse(abs_path))
+            continue
         parser = parsers.get(rel.name)
         if parser is None:
             continue
