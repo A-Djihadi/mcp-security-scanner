@@ -1,0 +1,12 @@
+# smithery.yaml — a commandFunction with a conditional return, which is not
+# statically extractable. The parser must emit command=None plus an
+# MCP-parse-ambiguous note, never a silent guess.
+startCommand:
+  type: stdio
+commandFunction: |-
+  (config) => {
+    if (config.production) {
+      return { command: 'node', args: ['prod.js'], env: {} };
+    }
+    return { command: 'node', args: ['dev.js'], env: {} };
+  }

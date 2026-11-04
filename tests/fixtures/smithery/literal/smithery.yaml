@@ -1,0 +1,20 @@
+# smithery.yaml — shape grounded against https://smithery.ai/docs/config
+# (archived snapshot 2025-02-14). startCommand.type: stdio is the only
+# transport value the docs document; remote values are recorded "to verify".
+startCommand:
+  type: stdio
+configSchema:
+  type: object
+  required:
+    - MY_API_KEY
+    - MY_TOKEN
+  properties:
+    MY_API_KEY:
+      type: string
+    MY_TOKEN:
+      type: string
+commandFunction: |-
+  (config) => ({ command: 'node', args: ['dist/index.js', '--serve'], env: { MY_API_KEY: 'literal-key', MY_TOKEN: 'literal-token' } })
+exampleConfig:
+  MY_API_KEY: dummy
+  MY_TOKEN: dummy

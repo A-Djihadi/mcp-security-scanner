@@ -10,6 +10,7 @@ from .mcp_permissions import (
     MCPBroadNetwork,
     MCPShellUnrestricted,
 )
+from .parsing import MCPParseAmbiguous
 from .skill_patterns import (
     SKLObfuscatedCommand,
     SKLRemoteCodeExec,
@@ -27,6 +28,7 @@ _ALL_RULES = [
     SKLObfuscatedCommand(),
     SKLSqlConcatenation(),
     DEPUnpinned(),
+    MCPParseAmbiguous(),
 ]
 
 __all__ = [
@@ -39,6 +41,7 @@ __all__ = [
     "SKLObfuscatedCommand",
     "SKLSqlConcatenation",
     "DEPUnpinned",
+    "MCPParseAmbiguous",
     "build_default_registry",
 ]
 

@@ -7,6 +7,7 @@ from .package_json import PackageJsonParser
 from .pyproject import PyprojectParser
 from .requirements import RequirementsParser
 from .skill_markdown import SkillMarkdownParser
+from .smithery_yaml import SmitheryYamlParser
 
 __all__ = [
     "ClaudeDesktopConfigParser",
@@ -15,4 +16,5 @@ __all__ = [
     "PyprojectParser",
     "RequirementsParser",
     "SkillMarkdownParser",
+    "SmitheryYamlParser",
 ]

@@ -18,6 +18,7 @@ from .parsers import (
     PyprojectParser,
     RequirementsParser,
     SkillMarkdownParser,
+    SmitheryYamlParser,
 )
 from .rules import build_default_registry
 from .sarif import SARIFWriter
@@ -33,6 +34,7 @@ _PARSERS = {
     "requirements.txt": RequirementsParser,
     "pyproject.toml": PyprojectParser,
     "SKILL.md": SkillMarkdownParser,
+    "smithery.yaml": SmitheryYamlParser,
 }
 
 
