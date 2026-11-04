@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 from mcpsec.model import Finding, RuleRegistry, SourceLocation, compute_fingerprint
 from mcpsec.sarif import SARIFWriter
@@ -140,6 +141,29 @@ def test_fingerprint_appears_in_sarif_output(tmp_path):
     doc = _write([finding], _registry(_Rule("R-1", "error", "rule")), tmp_path)
     result = doc["runs"][0]["results"][0]
     assert result["partialFingerprints"]["primary"] == finding.fingerprint
+
+
+def test_finding_properties_are_emitted_when_present(tmp_path):
+    finding = _finding("R-1", "error", "m", "a.json", 1)
+    finding = replace(
+        finding, properties={"corpus_version": "7", "model_version": "all-MiniLM-L6-v2"}
+    )
+    doc = _write([finding], _registry(_Rule("R-1", "error", "rule")), tmp_path)
+    result = doc["runs"][0]["results"][0]
+    assert result["properties"] == {
+        "corpus_version": "7",
+        "model_version": "all-MiniLM-L6-v2",
+    }
+
+
+def test_finding_without_properties_emits_no_properties_key(tmp_path):
+    doc = _write(
+        [_finding("R-1", "error", "m", "a.json", 1)],
+        _registry(_Rule("R-1", "error", "rule")),
+        tmp_path,
+    )
+    result = doc["runs"][0]["results"][0]
+    assert "properties" not in result
 
 
 def test_two_writes_are_byte_identical(tmp_path):

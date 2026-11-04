@@ -65,8 +65,9 @@ class SARIFWriter:
             ],
         }
 
-        results = [
-            {
+        results = []
+        for finding in findings:
+            result = {
                 "ruleId": finding.rule_id,
                 "ruleIndex": rule_index[finding.rule_id],
                 "level": finding.level,
@@ -74,8 +75,9 @@ class SARIFWriter:
                 "locations": [self._location(finding.location)],
                 "partialFingerprints": {"primary": finding.fingerprint},
             }
-            for finding in findings
-        ]
+            if finding.properties:
+                result["properties"] = finding.properties
+            results.append(result)
 
         return {
             "$schema": self.SCHEMA_URI,

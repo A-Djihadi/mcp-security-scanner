@@ -26,7 +26,7 @@ from __future__ import annotations
 import enum
 import hashlib
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Iterator, Protocol
+from typing import Any, Iterable, Iterator, Protocol, Sequence
 
 
 class TargetKind(str, enum.Enum):
@@ -66,6 +66,7 @@ class Finding:
     level: str  # "error" | "warning" | "note"
     message: str
     location: SourceLocation
+    properties: dict[str, Any] = field(default_factory=dict)
 
     @property
     def fingerprint(self) -> str:
@@ -80,6 +81,19 @@ def compute_fingerprint(rule_id: str, location: SourceLocation) -> str:
         digest.update(str(part).encode("utf-8"))
         digest.update(b"\x00")
     return digest.hexdigest()
+
+
+class Embedder(Protocol):
+    """Maps free text to a fixed-length embedding vector (ADR-0008).
+
+    The single required method is ``embed``; a concrete embedder may
+    additionally expose ``name`` and ``version`` attributes so a finding can
+    record which model produced the vectors (reproducibility). Implementations
+    are deterministic and offline — embedding a fixed text with a fixed model
+    is a pure function.
+    """
+
+    def embed(self, text: str) -> Sequence[float]: ...
 
 
 class RuleMetadata(Protocol):
