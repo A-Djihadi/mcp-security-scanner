@@ -11,6 +11,7 @@ from ._http import DEFAULT_ATTEMPTS, DEFAULT_TIMEOUT, DataUnavailable
 from .providers import (
     NpmProvider,
     OSVProvider,
+    PopularPackagesProvider,
     PyPIProvider,
     ReachabilityProvider,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "DEFAULT_TIMEOUT",
     "NpmProvider",
     "OSVProvider",
+    "PopularPackagesProvider",
     "PyPIProvider",
     "ReachabilityProvider",
 ]
