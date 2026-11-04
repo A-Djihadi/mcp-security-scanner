@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "remote-sse": {
+      "type": "sse",
+      "url": "https://example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sk-abcdef123456",
+        "Content-Type": "application/json"
+      }
+    },
+    "remote-type-only": {
+      "type": "streamable-http"
+    },
+    "remote-insecure": {
+      "type": "http",
+      "url": "http://example.com/mcp"
+    },
+    "local-tool": {
+      "command": "node",
+      "args": ["server.js"]
+    }
+  }
+}

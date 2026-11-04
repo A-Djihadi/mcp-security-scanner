@@ -78,6 +78,18 @@ def build_server_target(
     else:
         env = {}
 
+    headers_node = members.get("headers")
+    if headers_node is not None and isinstance(headers_node.value, dict):
+        headers: dict[str, str] = {}
+        header_locs: dict[str, object] = {}
+        for key, child in headers_node.members:
+            if isinstance(child.value, str):
+                headers[key] = child.value
+                header_locs[key] = location(path, index, child.value_offset)
+        field_locations["headers"] = header_locs
+    else:
+        headers = {}
+
     cwd = _string_or_none(members.get("cwd"))
     url = _string_or_none(members.get("url"))
     mcp_type = _string_or_none(members.get("type"))
@@ -100,6 +112,8 @@ def build_server_target(
         "cwd": cwd,
         "transport": transport,
         "url": url,
+        "type": mcp_type,
+        "headers": headers,
     }
 
     return Target(
