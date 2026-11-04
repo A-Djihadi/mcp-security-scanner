@@ -50,6 +50,7 @@ class SKLShellExecution:
     id = "SKL-shell-execution"
     level = "warning"
     short_description = "Skill invokes a shell with interpolated input."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.SKILL:
@@ -77,6 +78,7 @@ class SKLRemoteCodeExec:
     id = "SKL-remote-code-exec"
     level = "error"
     short_description = "Skill pipes remote content to a shell."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.SKILL:
@@ -101,6 +103,7 @@ class SKLObfuscatedCommand:
     id = "SKL-obfuscated-command"
     level = "warning"
     short_description = "Skill decodes a base64 payload in a shell command."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.SKILL:
@@ -126,6 +129,7 @@ class SKLSqlConcatenation:
     id = "SKL-sql-concatenation"
     level = "error"
     short_description = "Skill builds a SQL query by string interpolation."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.SKILL:

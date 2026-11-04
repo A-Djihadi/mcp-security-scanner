@@ -9,6 +9,7 @@ class DEPUnpinned:
     id = "DEP-unpinned"
     level = "warning"
     short_description = "Dependency version is not pinned."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.DEPENDENCY:

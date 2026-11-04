@@ -44,6 +44,7 @@ class MCPShellUnrestricted:
     id = "MCP-shell-unrestricted"
     level = "error"
     short_description = "MCP server runs an unrestricted shell interpreter."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.MCP_SERVER:
@@ -71,6 +72,7 @@ class MCPAllowAll:
     id = "MCP-allow-all"
     level = "error"
     short_description = "MCP server grants unrestricted permissions."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.MCP_SERVER:
@@ -95,6 +97,7 @@ class MCPBroadNetwork:
     id = "MCP-broad-network"
     level = "error"
     short_description = "MCP server allows unrestricted network access."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.MCP_SERVER:
@@ -120,6 +123,7 @@ class MCPBroadFilesystem:
     id = "MCP-broad-filesystem"
     level = "warning"
     short_description = "MCP server grants broad filesystem access."
+    online = False
 
     def check(self, target: Target) -> list[Finding]:
         if target.kind is not TargetKind.MCP_SERVER:
