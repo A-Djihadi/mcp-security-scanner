@@ -92,6 +92,8 @@ class SARIFWriter:
             }
             if getattr(known[finding.rule_id], "online", False):
                 result["properties"] = {"mode": "online"}
+            if finding.properties:
+                result["properties"] = {**(result.get("properties") or {}), **finding.properties}
             results.append(result)
 
         run: dict = {"tool": {"driver": driver}, "results": results}
