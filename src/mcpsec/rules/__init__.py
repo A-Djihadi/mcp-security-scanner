@@ -14,6 +14,7 @@ from .mcp_permissions import (
     MCPAllowAll,
     MCPBroadFilesystem,
     MCPBroadNetwork,
+    MCPInlineCode,
     MCPShellUnrestricted,
 )
 from .parsing import MCPParseAmbiguous
@@ -38,6 +39,7 @@ _ALL_RULES = [
     MCPAllowAll(),
     MCPBroadNetwork(),
     MCPBroadFilesystem(),
+    MCPInlineCode(),
     MCPInsecureTransport(),
     MCPHeaderSecret(),
     MCPRemoteNoAuth(),
@@ -53,28 +55,29 @@ _ALL_RULES = [
 ]
 
 __all__ = [
-    "MCPShellUnrestricted",
-    "MCPAllowAll",
-    "MCPBroadNetwork",
-    "MCPBroadFilesystem",
-    "MCPInsecureTransport",
-    "MCPHeaderSecret",
-    "MCPRemoteNoAuth",
-    "MCPUnreachable",
-    "MCPUnreachableDiagnostic",
-    "SKLShellExecution",
-    "SKLRemoteCodeExec",
-    "SKLObfuscatedCommand",
-    "SKLSqlConcatenation",
-    "DEPUnpinned",
-    "DEPOutdated",
+    "CorpusAnchor",
     "DEPKnownVulnerability",
+    "DEPOutdated",
     "DEPUnknown",
-    "MCPParseAmbiguous",
+    "DEPUnpinned",
+    "FLOWCodeEval",
     "FLOWShellInjection",
     "FLOWSqlInjection",
-    "FLOWCodeEval",
-    "CorpusAnchor",
+    "MCPAllowAll",
+    "MCPBroadFilesystem",
+    "MCPBroadNetwork",
+    "MCPHeaderSecret",
+    "MCPInlineCode",
+    "MCPInsecureTransport",
+    "MCPParseAmbiguous",
+    "MCPRemoteNoAuth",
+    "MCPShellUnrestricted",
+    "MCPUnreachable",
+    "MCPUnreachableDiagnostic",
+    "SKLObfuscatedCommand",
+    "SKLRemoteCodeExec",
+    "SKLShellExecution",
+    "SKLSqlConcatenation",
     "SemanticCorpus",
     "SemanticRule",
     "build_default_registry",
@@ -113,7 +116,12 @@ def _build_online_rules() -> list:
     performs no I/O. Each rule receives its provider at construction so
     ``check()`` stays I/O-free and deterministic over provider output.
     """
-    from ..sources import NpmProvider, OSVProvider, PopularPackagesProvider, PyPIProvider
+    from ..sources import (
+        NpmProvider,
+        OSVProvider,
+        PopularPackagesProvider,
+        PyPIProvider,
+    )
 
     return [
         DEPOutdated(pypi_provider=PyPIProvider(), npm_provider=NpmProvider()),

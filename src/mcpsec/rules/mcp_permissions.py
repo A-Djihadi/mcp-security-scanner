@@ -11,7 +11,18 @@ import re
 
 from ..model import Finding, Target, TargetKind
 
-_SHELLS = {"sh", "bash", "zsh", "powershell", "pwsh", "cmd"}
+_SHELLS = {
+    "sh", "bash", "zsh", "dash", "ash", "ksh", "mksh", "fish", "csh", "tcsh",
+    "powershell", "pwsh", "cmd",
+}
+# Launchers that run another program: the real command is their first operand.
+_WRAPPERS = {"env", "sudo", "doas", "nohup", "stdbuf", "exec", "command"}
+# Interpreters whose flag runs inline code passed on the command line.
+_INLINE_CODE = {
+    "python": {"-c"}, "python3": {"-c"}, "py": {"-c"}, "pypy3": {"-c"},
+    "node": {"-e", "--eval", "-p", "--print"}, "bun": {"-e", "--eval"},
+    "deno": {"eval"}, "ruby": {"-e"}, "perl": {"-e", "-E"}, "php": {"-r"},
+}
 _ALLOW_ALL_FLAGS = {"--allow-all", "--allow-everything", "-A"}
 _FS_FLAGS = ("--allow-read", "--allow-write", "--allow-read-write")
 
@@ -20,9 +31,19 @@ _DRIVE_ROOT = re.compile(r"^[A-Za-z]:[\\/]?$")
 
 def _shell_basename(command: str) -> str:
     base = command.strip().rsplit("/", 1)[-1].rsplit("\\", 1)[-1].lower()
-    if base.endswith(".exe"):
-        base = base[:-4]
+    base = base.removesuffix(".exe")
     return base
+
+
+def _effective_command(command: str, args: list) -> tuple[str, list]:
+    """Unwrap launchers (``env bash -c``, ``sudo sh``) to the program they run."""
+    base, rest = _shell_basename(command), list(args)
+    while base in _WRAPPERS and rest:
+        head = rest.pop(0)
+        if not isinstance(head, str) or head.startswith("-") or "=" in head:
+            continue  # option or VAR=value assignment of the launcher
+        base = _shell_basename(head)
+    return base, rest
 
 
 def _is_broad_path(path: str) -> bool:
@@ -52,7 +73,8 @@ class MCPShellUnrestricted:
         command = target.payload.get("command")
         if not isinstance(command, str) or not command:
             return []
-        if _shell_basename(command) not in _SHELLS:
+        base, _ = _effective_command(command, target.payload.get("args") or [])
+        if base not in _SHELLS:
             return []
         location = target.field_locations.get("command") or target.location
         return [
@@ -61,7 +83,8 @@ class MCPShellUnrestricted:
                 level=self.level,
                 message=(
                     f'server "{target.name}" runs an unrestricted shell '
-                    f'(command "{command}")'
+                    f'(command "{command}"'
+                    + (f" -> {base})" if base != _shell_basename(command) else ")")
                 ),
                 location=location,
             )
@@ -104,7 +127,7 @@ class MCPBroadNetwork:
             return []
         findings: list[Finding] = []
         for arg, location in _args_with_locations(target):
-            if arg == "--allow-net":
+            if arg in ("--allow-net", "--allow-net="):
                 findings.append(
                     Finding(
                         rule_id=self.id,
@@ -147,3 +170,35 @@ class MCPBroadFilesystem:
                     )
                 )
         return findings
+
+
+class MCPInlineCode:
+    id = "MCP-inline-code"
+    level = "warning"
+    short_description = (
+        "MCP server runs inline code passed on the command line (python -c, node -e)."
+    )
+    online = False
+
+    def check(self, target: Target) -> list[Finding]:
+        if target.kind is not TargetKind.MCP_SERVER:
+            return []
+        command = target.payload.get("command")
+        if not isinstance(command, str) or not command:
+            return []
+        base, rest = _effective_command(command, target.payload.get("args") or [])
+        flags = _INLINE_CODE.get(base)
+        if not flags or not any(isinstance(a, str) and a in flags for a in rest):
+            return []
+        location = target.field_locations.get("command") or target.location
+        return [
+            Finding(
+                rule_id=self.id,
+                level=self.level,
+                message=(
+                    f'server "{target.name}" runs inline code with {base} '
+                    "(code is not reviewable as a file)"
+                ),
+                location=location,
+            )
+        ]
