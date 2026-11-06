@@ -9,7 +9,21 @@ dependencies, and malicious patterns. Emits SARIF v2.1.0 for CI integration.
 
 ## Install
 
-Requires Python 3.13 and [`uv`](https://docs.astral.sh/uv/).
+Requires Python 3.13.
+
+Install the published package from PyPI:
+
+```bash
+pip install mcpsec-scan
+```
+
+Opt into semantic detection with the `[semantic]` extra:
+
+```bash
+pip install mcpsec-scan[semantic]
+```
+
+Or install from source with [`uv`](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/A-Djihadi/mcp-security-scanner.git
@@ -56,7 +70,7 @@ PyYAML-only, and a default scan never loads the model runtime.
 
 ```bash
 # Opt into the heavier install once:
-uv sync --extra semantic   # or: pip install mcp-security-scanner[semantic]
+uv sync --extra semantic   # or: pip install mcpsec-scan[semantic]
 
 # Then scan with semantic detection enabled:
 uv run mcpsec scan . --semantic
