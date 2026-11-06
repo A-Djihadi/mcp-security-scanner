@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.13"
+      - name: Check tag matches project version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: python scripts/check_tag_version.py "$TAG_NAME"
+      - name: Build distributions
+        run: uv build
+      - name: Smoke test the wheel in a clean venv
+        run: |
+          uv venv /tmp/mcpsec-smoke
+          uv pip install --python /tmp/mcpsec-smoke/bin/python dist/*.whl
+          /tmp/mcpsec-smoke/bin/mcpsec --help
+          /tmp/mcpsec-smoke/bin/python -c "import mcpsec"
+      - name: Upload distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0
+        with:
+          packages-dir: dist/

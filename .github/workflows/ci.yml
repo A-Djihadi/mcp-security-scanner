@@ -39,3 +39,24 @@ jobs:
           echo "${GITLEAKS_SHA256}  gitleaks.tgz" | sha256sum -c -
           tar -xzf gitleaks.tgz gitleaks
           ./gitleaks git . --redact --verbose
+
+  workflow-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Lint workflows with zizmor
+        env:
+          ZIZMOR_VERSION: "1.32.0"
+        run: uv tool run "zizmor@${ZIZMOR_VERSION}" .github/workflows/*.yml
+      - name: Lint workflows with actionlint (pinned binary, verified checksum)
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          curl -sSfL -o actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint .github/workflows/*.yml

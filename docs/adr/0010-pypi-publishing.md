@@ -1,6 +1,6 @@
 # ADR-0010: PyPI publishing via Trusted Publishing (OIDC) and tag-triggered release
 
-**Status:** accepted (owner credentials pending — see Consequences)
+**Status:** accepted
 
 ## Context
 
@@ -8,28 +8,32 @@ Issue #8 wants the scanner published to PyPI with release automation. The repo
 is public and already follows DevSecOps baseline (pinned actions, `permissions`
 scoping, gitleaks in CI). Publishing introduces a permanent external side effect
 and a credential surface; the design must minimize long-lived secrets and make
-release reproducible and non-destructive. The distribution name is currently
-assumed (`mcp-security-scanner`) and is cheap to rename before the first release.
+release reproducible and non-destructive. The distribution name must be final
+before the first release.
 
 ## Decision
 
-- **Distribution name:** `mcp-security-scanner` (assumed — **to verify**
-  availability and ownership on PyPI; rename before the first release if taken).
+- **Distribution name:** `mcpsec-scan` (final). The originally assumed name
+  `mcp-security-scanner` is already taken on PyPI by an unrelated tool, so the
+  distribution is published under `mcpsec-scan`. The import module remains
+  `mcpsec` and is unaffected by the distribution rename.
 - **Auth: PyPI Trusted Publishing (OIDC).** The publish workflow authenticates
-  to PyPI with an OIDC token from GitHub Actions (`id-token: write`) instead of a
-  long-lived API token — no secret is stored in the repo. This matches the
-  standing DevSecOps rule "prefer OIDC over long-lived cloud keys."
+  to PyPI with an OIDC token from GitHub Actions (`id-token: write`, scoped to
+  the publish job) instead of a long-lived API token — no secret is stored in
+  the repo. This matches the standing DevSecOps rule "prefer OIDC over
+  long-lived cloud keys."
 - **Trigger:** a `v*` tag (e.g. `v0.1.0`) starts the release workflow. The tag
   is the only human action; everything else is automated.
 - **Build & publish:** build `sdist` + `wheel` with `uv build`, publish with
-  `pypa/gh-action-pypi-publish` (pinned by SHA) pointed at the trusted-publisher
-  environment. `permissions: { contents: read, id-token: write }`.
+  `pypa/gh-action-pypi-publish` (pinned by SHA) via trusted publishing. The
+  publish job holds `permissions: { contents: read, id-token: write }` and
+  nothing more.
 - **Version source of truth:** `pyproject.toml` `[project].version`; the
-  workflow **fails** if the tag and the project version disagree (no drift).
-- **GitHub Release:** immutable — draft the release, attach the built artifacts,
-  then publish. `latest`-style floating tags are not used.
-- **Protection:** the publish job runs in a protected environment (required
-  reviewers) so a release is a deliberate, reviewed act, not an accidental push.
+  workflow **fails** if the tag and the project version disagree (no drift),
+  via `scripts/check_tag_version.py`.
+- **Protection:** a `v*` tag alone triggers the release. There is no protected
+  environment and no required reviewers — the tag push is itself the
+  deliberate, reviewed act.
 
 ## Considered options
 
@@ -44,14 +48,17 @@ assumed (`mcp-security-scanner`) and is cheap to rename before the first release
 - **`setuptools-scm`/auto-versioning** — rejected for now: adds a build-time
   dependency and indirection; a single `pyproject.toml` version + tag check is
   simpler and sufficient.
+- **Protected environment / required reviewers** — rejected: the owner chose a
+  tag-only trigger; a protected environment would gate the release on manual
+  approval rather than the tag itself.
 
 ## Consequences
 
-- Releases are reproducible, reviewed, and carry no long-lived secret in the
-  repo.
-- Owner actions required before T24 can complete: create the PyPI account,
-  reserve/confirm the name, and enable the repo as a trusted publisher
-  (or authorize the one-off token for the first upload) — see
-  `phase2-owner-actions.md`. No account or token may be created by an agent.
-- Until the owner completes those actions, T24 is blocked at the publish step
-  (everything else — workflow file, tag/version check, build — is unblocked).
+- Releases are reproducible, tag-triggered, and carry no long-lived secret in
+  the repo.
+- Owner actions required before the first release: on PyPI, add a *pending
+  trusted publisher* for owner `A-Djihadi`, repo `mcp-security-scanner`,
+  workflow `release.yml`, environment blank; then push tag `v0.1.0` to trigger
+  the first upload. No account or token may be created by an agent. Until then,
+  everything up to the publish step (workflow file, tag/version check, build,
+  smoke test) is delivered and verified locally.
