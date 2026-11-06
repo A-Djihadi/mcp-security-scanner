@@ -17,8 +17,8 @@ import hashlib
 import math
 import os
 import urllib.request
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from .errors import McpsecError
 from .model import Embedder
@@ -68,7 +68,7 @@ def _download(url: str, dest: Path, expected_sha256: str) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
     try:
-        with urllib.request.urlopen(url, timeout=120) as response, tmp.open("wb") as out:
+        with urllib.request.urlopen(url, timeout=120) as response, tmp.open("wb") as out:  # nosec B310 - constant https URL, sha256-verified
             for chunk in iter(lambda: response.read(1024 * 1024), b""):
                 out.write(chunk)
     except OSError as exc:
@@ -155,7 +155,7 @@ def load_default_embedder() -> Embedder:
     installed or the pinned model cannot be obtained/loaded.
     """
     try:
-        import onnxruntime  # noqa: F401  (lazy — keeps base install light)
+        import onnxruntime
         from tokenizers import Tokenizer
     except ImportError as exc:
         raise SemanticBackendError(

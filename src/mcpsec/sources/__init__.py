@@ -17,9 +17,9 @@ from .providers import (
 )
 
 __all__ = [
-    "DataUnavailable",
     "DEFAULT_ATTEMPTS",
     "DEFAULT_TIMEOUT",
+    "DataUnavailable",
     "NpmProvider",
     "OSVProvider",
     "PopularPackagesProvider",

@@ -16,6 +16,7 @@ from ._http import (
     DEFAULT_TIMEOUT,
     DataUnavailable,
     _HttpClient,
+    is_public_destination,
 )
 
 # Endpoints — exact host/paths are "to verify" against the live services.
@@ -175,6 +176,12 @@ class ReachabilityProvider:
         (timeout, DNS, malformed URL) raises ``DataUnavailable`` because the
         outcome cannot be determined.
         """
+        if not is_public_destination(url):
+            raise DataUnavailable(
+                f"not probed: {url} is not a public address (loopback, private, "
+                "link-local or unresolvable)",
+                kind="blocked",
+            )
         try:
             self._client.get(url)
             return "reachable"

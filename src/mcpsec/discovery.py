@@ -10,7 +10,8 @@ tree does not scan its own ``.venv``.
 
 from __future__ import annotations
 
-from pathlib import Path
+from fnmatch import fnmatch
+from pathlib import Path, PurePosixPath
 
 _SUPPORTED_NAMES = frozenset(
     {
@@ -58,12 +59,21 @@ def discover_skill_files(root: Path) -> list[Path]:
     return sorted(root.glob("profiles/*/skills/*/SKILL.md"))
 
 
-def discover_files(root: Path) -> list[Path]:
+def _excluded(rel: Path, patterns: tuple[str, ...]) -> bool:
+    """True if ``rel`` (or one of its parent directories) matches a glob pattern."""
+    posix = PurePosixPath(rel.as_posix())
+    candidates = [posix.as_posix(), *(p.as_posix() for p in posix.parents if p.as_posix() != ".")]
+    return any(fnmatch(c, pat.rstrip("/")) for c in candidates for pat in patterns)
+
+
+def discover_files(root: Path, exclude: tuple[str, ...] = ()) -> list[Path]:
     """Return supported input files under ``root`` as paths relative to it.
 
     Sorted by relative path for determinism. Includes any ``SKILL.md`` (the
     Hermes layout is a subset of the recursive walk) and any ``*.py`` source
-    file (taint/flow analysis, T22). Files under ``_SKIP_DIRS`` are excluded.
+    file (taint/flow analysis, T22). Files under ``_SKIP_DIRS`` are excluded,
+    and so are paths matching an ``exclude`` glob (matched against the relative
+    path and each of its parent directories: ``tests/fixtures`` prunes the tree).
     """
     root = Path(root)
     found: list[Path] = []
@@ -72,6 +82,8 @@ def discover_files(root: Path) -> list[Path]:
             continue
         rel_parts = path.relative_to(root).parts
         if any(part in _SKIP_DIRS for part in rel_parts[:-1]):
+            continue
+        if exclude and _excluded(path.relative_to(root), exclude):
             continue
         if path.name in _SUPPORTED_NAMES or path.name.endswith(_PYTHON_SUFFIX):
             found.append(path.relative_to(root))

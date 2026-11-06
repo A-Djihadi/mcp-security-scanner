@@ -234,9 +234,7 @@ class _TaintAnalyzer:
 
         if any(arg_taints) or any(kw_taints) or callee_tainted:
             return True
-        if dotted is not None and dotted in self.returns_taint:
-            return True
-        return False
+        return dotted is not None and dotted in self.returns_taint
 
     def _check_sink(self, node: ast.Call, arg_taints: list[bool]) -> None:
         dotted = _dotted_name(node.func)
@@ -250,9 +248,9 @@ class _TaintAnalyzer:
             if arg_taints and arg_taints[0]:
                 self._record("FLOW-shell-injection", dotted, node)
             return
-        if isinstance(node.func, ast.Attribute) and node.func.attr in _SQL_SINKS:
-            if arg_taints and arg_taints[0]:
-                self._record("FLOW-sql-injection", node.func.attr, node)
+        if (isinstance(node.func, ast.Attribute) and node.func.attr in _SQL_SINKS
+                and arg_taints and arg_taints[0]):
+            self._record("FLOW-sql-injection", node.func.attr, node)
 
     def _record(self, rule_id: str, sink_name: str, node: ast.AST) -> None:
         line = getattr(node, "lineno", 1)
@@ -328,9 +326,9 @@ class _TaintAnalyzer:
 
         if isinstance(stmt, (ast.With, ast.AsyncWith)):
             for item in stmt.items:
-                if item.context_expr is not None and self._taint_expr(item.context_expr):
-                    if item.optional_vars is not None:
-                        self._assign_target(item.optional_vars)
+                if (item.context_expr is not None and self._taint_expr(item.context_expr)
+                        and item.optional_vars is not None):
+                    self._assign_target(item.optional_vars)
             self.visit_body(stmt.body)
             return
 

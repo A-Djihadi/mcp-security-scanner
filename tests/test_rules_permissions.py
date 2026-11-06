@@ -193,3 +193,36 @@ def test_benign_server_triggers_nothing():
     )
     for rule in (MCPShellUnrestricted(), MCPAllowAll(), MCPBroadNetwork(), MCPBroadFilesystem()):
         assert rule.check(target) == [], rule.id
+
+
+# --- audit 2026-11: shells, launchers, inline code, empty --allow-net -------
+
+def test_more_shells_are_detected():
+    rule = MCPShellUnrestricted()
+    for shell in ("dash", "ksh", "fish", "/usr/bin/tcsh", "ash"):
+        assert rule.check(_server(command=shell)), shell
+
+
+def test_shell_behind_env_launcher_is_detected():
+    rule = MCPShellUnrestricted()
+    assert rule.check(_server(command="env", args=["FOO=1", "bash", "-c", "x"]))
+    assert rule.check(_server(command="/usr/bin/env", args=["-i", "sh"]))
+    assert rule.check(_server(command="env", args=["node", "server.js"])) == []
+
+
+def test_empty_allow_net_value_is_unrestricted():
+    rule = MCPBroadNetwork()
+    assert rule.check(_server(command="deno", args=["run", "--allow-net=", "s.ts"]))
+    assert rule.check(_server(command="deno", args=["run", "--allow-net=api.x.io"])) == []
+
+
+def test_inline_code_interpreters_are_flagged():
+    from mcpsec.rules import MCPInlineCode
+
+    rule = MCPInlineCode()
+    (finding,) = rule.check(_server(command="python", args=["-c", "import os"]))
+    assert finding.level == "warning"
+    assert rule.check(_server(command="node", args=["-e", "require('x')"]))
+    assert rule.check(_server(command="env", args=["python3", "-c", "x"]))
+    assert rule.check(_server(command="python", args=["-m", "my_server"])) == []
+    assert rule.check(_server(command="node", args=["dist/index.js"])) == []

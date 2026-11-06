@@ -7,11 +7,10 @@ sorts deterministically by (path, line, column, rule id, message).
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from .model import (
     Finding,
-    Rule,
     RuleRegistry,
     Target,
     dedupe_findings,

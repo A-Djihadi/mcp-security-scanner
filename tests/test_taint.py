@@ -8,7 +8,7 @@ from pathlib import Path
 from mcpsec import cli
 from mcpsec.discovery import discover_files
 from mcpsec.engine import RuleEngine
-from mcpsec.model import RuleRegistry, SourceLocation, Target, TargetKind
+from mcpsec.model import SourceLocation, Target, TargetKind
 from mcpsec.parsers import PythonSourceParser
 from mcpsec.rules import (
     FLOWCodeEval,

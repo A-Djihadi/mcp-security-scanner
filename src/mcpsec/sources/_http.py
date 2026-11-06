@@ -9,16 +9,21 @@ a run.
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import socket
 import urllib.error
 import urllib.request
 from typing import Any
+from urllib.parse import urlsplit
 
 # Bounded defaults. The exact values are "to verify" against the real rate limits
 # and Terms of Service of PyPI, npm, and OSV.dev before shipping (ADR-0007).
 DEFAULT_TIMEOUT = 10.0  # seconds — to verify
 DEFAULT_ATTEMPTS = 2  # total attempts — to verify
+# Upper bound on a response body: a hostile endpoint must not exhaust memory.
+MAX_RESPONSE_BYTES = 10 * 1024 * 1024
+_ALLOWED_SCHEMES = frozenset({"http", "https"})
 
 
 class DataUnavailable(Exception):
@@ -86,6 +91,11 @@ class _HttpClient:
     def _attempt(
         self, method: str, url: str, payload: dict | None
     ) -> bytes | None:
+        scheme = urlsplit(url).scheme.lower()
+        if scheme not in _ALLOWED_SCHEMES:
+            # urlopen also serves file:// and ftp:// -- a scanned config must never
+            # make the scanner read local files or speak other protocols.
+            raise DataUnavailable(f"unsupported URL scheme {scheme!r}", kind="invalid")
         body: bytes | None = None
         headers = {"Accept": "application/json"}
         if payload is not None:
@@ -101,7 +111,7 @@ class _HttpClient:
         last: DataUnavailable | None = None
         for _ in range(self._max_attempts):
             try:
-                response = urllib.request.urlopen(request, timeout=self._timeout)
+                response = urllib.request.urlopen(request, timeout=self._timeout)  # nosec B310 - scheme checked above
             except urllib.error.HTTPError as exc:
                 # 404 is a normal "no data" result; every other status means the
                 # source could not serve usable data (no retry — the server
@@ -113,17 +123,24 @@ class _HttpClient:
                 ) from exc
             except urllib.error.URLError as exc:
                 last = _classify_urlerror(exc, url)
-            except (socket.timeout, TimeoutError) as exc:
+            except TimeoutError:
                 last = DataUnavailable(f"timeout from {url}", kind="timeout")
-            except ConnectionRefusedError as exc:
+            except ConnectionRefusedError:
                 last = DataUnavailable(f"connection refused by {url}", kind="refused")
             except OSError as exc:
                 last = DataUnavailable(f"network error from {url}: {exc}", kind="network")
             else:
                 with response:
-                    return response.read()
+                    data = response.read(MAX_RESPONSE_BYTES + 1)
+                if len(data) > MAX_RESPONSE_BYTES:
+                    raise DataUnavailable(
+                        f"response from {url} exceeds {MAX_RESPONSE_BYTES} bytes",
+                        kind="malformed",
+                    )
+                return data
 
-        assert last is not None
+        if last is None:  # pragma: no cover - max_attempts >= 1 always sets it
+            raise DataUnavailable(f"no attempt made for {url}", kind="network")
         raise DataUnavailable(
             f"request failed after {self._max_attempts} attempts: {url} ({last})",
             kind=last.kind,
@@ -146,3 +163,24 @@ def _classify_urlerror(exc: urllib.error.URLError, url: str) -> DataUnavailable:
     if isinstance(reason, (socket.timeout, TimeoutError)):
         return DataUnavailable(f"timeout from {url}", kind="timeout")
     return DataUnavailable(f"network error from {url}: {reason}", kind="network")
+
+
+def is_public_destination(url: str) -> bool:
+    """True if every address ``url``'s host resolves to is a public (global) IP.
+
+    Used before probing a URL taken from a scanned (untrusted) file, so an
+    ``--online`` scan in CI cannot be turned into an SSRF against loopback,
+    private networks or cloud metadata endpoints (169.254.169.254).
+    Residual risk: DNS can change between this check and the request.
+    """
+    host = urlsplit(url).hostname
+    if not host:
+        return False
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return False
+    addresses = {info[4][0] for info in infos}
+    return bool(addresses) and all(
+        ipaddress.ip_address(addr.split("%", 1)[0]).is_global for addr in addresses
+    )
