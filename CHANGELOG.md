@@ -2,7 +2,7 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — versioning: [SemVer](https://semver.org/).
 
-## [Unreleased]
+## [0.2.0] - 2026-11-09
 ### Added
 - `mcpsec triage`: advisory LLM explanation and fix for each finding, orchestrated with
   LangGraph (`Send` fan-out, per-finding subgraph, grounding guardrail, rules fallback),
