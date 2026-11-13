@@ -1,5 +1,5 @@
 [project]
-name = "mcpsec-scan"
+name = "mcp-skill-scanner"
 version = "0.2.0"
 description = "Static security scanner for MCP servers and AI agent skills."
 readme = "README.md"
