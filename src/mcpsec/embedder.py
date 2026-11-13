@@ -160,7 +160,7 @@ def load_default_embedder() -> Embedder:
     except ImportError as exc:
         raise SemanticBackendError(
             "semantic detection requires the [semantic] extra: "
-            "install with `pip install mcpsec-scan[semantic]`"
+            "install with `pip install mcp-skill-scanner[semantic]`"
         ) from exc
 
     paths = _ensure_model_files()

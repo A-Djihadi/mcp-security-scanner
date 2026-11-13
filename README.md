@@ -14,13 +14,13 @@ Requires Python 3.13.
 Install the published package from PyPI:
 
 ```bash
-pip install mcpsec-scan
+pip install mcp-skill-scanner
 ```
 
 Opt into semantic detection with the `[semantic]` extra:
 
 ```bash
-pip install mcpsec-scan[semantic]
+pip install mcp-skill-scanner[semantic]
 ```
 
 Or install from source with [`uv`](https://docs.astral.sh/uv/):
@@ -78,7 +78,7 @@ PyYAML-only, and a default scan never loads the model runtime.
 
 ```bash
 # Opt into the heavier install once:
-uv sync --extra semantic   # or: pip install mcpsec-scan[semantic]
+uv sync --extra semantic   # or: pip install mcp-skill-scanner[semantic]
 
 # Then scan with semantic detection enabled:
 uv run mcpsec scan . --semantic

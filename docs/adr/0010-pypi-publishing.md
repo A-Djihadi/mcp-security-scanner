@@ -13,10 +13,12 @@ before the first release.
 
 ## Decision
 
-- **Distribution name:** `mcpsec-scan` (final). The originally assumed name
-  `mcp-security-scanner` is already taken on PyPI by an unrelated tool, so the
-  distribution is published under `mcpsec-scan`. The import module remains
-  `mcpsec` and is unaffected by the distribution rename.
+- **Distribution name:** `mcp-skill-scanner` (final). The originally assumed name
+  `mcp-security-scanner` is already taken on PyPI by an unrelated tool, and a
+  first candidate was rejected by PyPI for being too similar to existing
+  projects (`mcpsec`, `mcpsecscan`), so the distribution is published under
+  `mcp-skill-scanner`. The import module remains `mcpsec` and is unaffected by
+  the distribution rename.
 - **Auth: PyPI Trusted Publishing (OIDC).** The publish workflow authenticates
   to PyPI with an OIDC token from GitHub Actions (`id-token: write`, scoped to
   the publish job) instead of a long-lived API token — no secret is stored in
