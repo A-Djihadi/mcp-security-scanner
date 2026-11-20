@@ -13,7 +13,7 @@ mcpsec = "mcpsec.cli:main"
 
 [project.optional-dependencies]
 semantic = [
-    "onnxruntime==1.31.1",
+    "onnxruntime==1.32.0",
     "tokenizers==0.23.3",
 ]
 # LLM triage (ADR-0011): LangGraph orchestration + Langfuse tracing.
